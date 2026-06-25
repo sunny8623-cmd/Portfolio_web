@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heesue Roh Portfolio</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* CSS Reset & Variable Definitions */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #FFFFFF;
+            color: #333333;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navbar */
+        #navbar {
+            height: 80px;
+            padding: 0 10%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #FFFFFF;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            height: 70px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .social-links a {
+            color: #333333;
+            transition: opacity 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .social-links a:hover {
+            opacity: 0.6;
+        }
+
+        .social-icon {
+            width: 24px;
+            height: 24px;
+            fill: #333333;
+        }
+
+        /* Main Workspace Layout */
+        #main-layout {
+            display: flex;
+            padding: 0 10%;
+            flex: 1;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        /* Left Sidebar (Transparent Context Canvas) */
+        #sidebar {
+            width: 120px;
+            background-color: transparent;
+            border-radius: 0;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: calc(100vh - 180px);
+            position: sticky;
+            top: 100px;
+            box-shadow: none;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            background-color: transparent !important;
+            color: #666666;
+            border: none;
+            border-radius: 0;
+            padding: 12px 4px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: none !important;
+            opacity: 0.55;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease, color 0.3s ease;
+        }
+
+        .sidebar-btn:hover {
+            opacity: 1;
+            color: #222222;
+            transform: scale(1.08);
+        }
+
+        .sidebar-btn.active {
+            opacity: 1;
+            color: #4B0082;
+            transform: scale(1.12);
+        }
+
+        .sidebar-btn svg {
+            width: 28px;
+            height: 28px;
+            fill: currentColor;
+        }
+
+        /* Content Window */
+        #content-window {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Unified Form & Button Styles */
+        .btn-gray {
+            background-color: #E0E0E0;
+            color: #333333;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-gray:hover {
+            background-color: #B7C1D8;
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: #333333;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            outline: none;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .input-field:focus {
+            box-shadow: 0 2px 12px rgba(140, 156, 192, 0.3);
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555555;
+        }
+
+        /* Profile Page */
+        .profile-container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .profile-left {
+            width: 40%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-image-wrap {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: #F0F0F0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-box {
+            background-color: #F8F9FA;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .preview-box iframe {
+            width: 100%;
+            height: 420px;
+            border: none;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+        }
+
+        .preview-box img {
+            max-height: 380px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* 3D Floating Masonry Grid System Architecture */
+        @keyframes dynamicFloatState {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .masonry-grid {
+            column-width: 240px;
+            column-gap: 24px;
+            width: 100%;
+            padding-top: 10px;
+        }
+
+        .portfolio-card {
+            break-inside: avoid;
+            background-color: #FFFFFF;
+            border-radius: 20px;
+            margin-bottom: 26px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+            
+            /* 3D Floating Layer Realization */
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+            animation: dynamicFloatState 5s ease-in-out infinite;
+            
+            /* High Performance Elastic Interpolation Pipeline */
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s ease;
+        }
+
+        /* Anti-synchronization delays for floating staggered aesthetics */
+        .portfolio-card:nth-child(2n) { animation-delay: -1.5s; animation-duration: 5.5s; }
+        .portfolio-card:nth-child(3n) { animation-delay: -3s; animation-duration: 6s; }
+
+        .portfolio-card:hover {
+            /* Elevated levitation transformation matrix */
+            transform: translateY(-16px) scale(1.03) translateZ(0) !important;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12), 0 12px 24px rgba(0, 0, 0, 0.06);
+            animation-play-state: paused;
+        }
+
+        /* Tactile Spring-loaded Mechanical Compression Click Active State */
+        .portfolio-card:active {
+            transform: translateY(6px) scale(0.93) translateZ(0) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.5) !important;
+        }
+
+        .card-media-container {
+            position: relative;
+            width: 100%;
+            background-color: #F0F0F0;
+            overflow: hidden;
+        }
+
+        .card-media-container img, 
+        .card-media-container video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0);
+            transition: background-color 0.3s ease;
+            z-index: 1;
+        }
+
+        .portfolio-card:hover .card-overlay {
+            background-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .card-meta {
+            padding: 16px;
+            background: #FFFFFF;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #222222;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-author {
+            font-size: 13px;
+            color: #777777;
+        }
+
+        /* Create & Edit Page */
+        .banner {
+            background-color: #EBF0FF;
+            color: #3F51B5;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* Detail Modal */
+        #detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        #detail-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-wrapper {
+            background-color: #FFFFFF;
+            border-radius: 20px;
+            max-width: 680px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #detail-modal.active .modal-wrapper {
+            transform: scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #FFFFFF;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            color: #333333;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            background-color: #F0F0F0;
+        }
+
+        .modal-media {
+            width: 100%;
+            background-color: #000000;
+            display: block;
+        }
+
+        .modal-media img, 
+        .modal-media video {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #111111;
+            margin-bottom: 6px;
+        }
+
+        .modal-author {
+            font-size: 14px;
+            color: #888888;
+            margin-bottom: 20px;
+        }
+
+        .modal-content-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #444444;
+            margin-bottom: 24px;
+            white-space: pre-wrap;
+        }
+
+        .prompt-card {
+            background-color: #F4F5F8;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .prompt-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: #888888;
+            margin-bottom: 8px;
+        }
+
+        .prompt-text {
+            font-size: 14px;
+            color: #555555;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Footer Rendering */
+        #footer {
+            padding: 40px 10%;
+            background-color: #FFFFFF;
+            font-size: 13px;
+            color: #666666;
+            line-height: 1.8;
+            margin-top: auto;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            #main-layout {
+                flex-direction: column;
+                gap: 24px;
+            }
+            #sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                flex-direction: row;
+                padding: 12px 0;
+            }
+            .sidebar-nav {
+                flex-direction: row;
+                justify-content: space-around;
+                gap: 12px;
+            }
+            .sidebar-btn {
+                flex-direction: row;
+                justify-content: center;
+                padding: 8px;
+                gap: 6px;
+            }
+            .profile-container {
+                flex-direction: column;
+            }
+            .profile-left {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="navbar">
+        <div class="logo-container" onclick="navigateTo('portfolio')">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" style="height: 70px; width: auto;">
+                <g transform="translate(20, 5)">
+                    <path d="M40,76 Q38,60 40,30" stroke="#556B2F" stroke-width="2" fill="none"/>
+                    <path d="M40,65 Q45,62 47,58 Q42,58 40,65" fill="#8A2BE2" stroke="#4B0082" stroke-width="0.5"/>
+                    <path d="M40,65 Q35,62 33,58 Q38,58 40,65" fill="#8A2BE2" stroke="#4B0082" stroke-width="0.5"/>
+                    <path d="M40,52 Q46,48 48,42 Q42,44 40,52" fill="#9370DB" stroke="#4B0082" stroke-width="0.5"/>
+                    <path d="M40,52 Q34,48 32,42 Q38,44 40,52" fill="#9370DB" stroke="#4B0082" stroke-width="0.5"/>
+                    <path d="M40,36 Q45,30 40,24 Q35,30 40,36" fill="#BA55D3" stroke="#4B0082" stroke-width="0.5"/>
+                </g>
+                <text x="60" y="106" font-family="'Pretendard', sans-serif" font-size="13" font-weight="800" fill="#222222" letter-spacing="0.03em" text-anchor="middle">Heesue Roh</text>
+            </svg>
+        </div>
+        <div class="social-links" id="social-container">
+            </div>
+    </header>
+
+    <main id="main-layout">
+        <nav id="sidebar">
+            <div class="sidebar-nav">
+                <button class="sidebar-btn active" data-target="portfolio" onclick="navigateTo('portfolio')">
+                    <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+                    Portfolio
+                </button>
+                <button class="sidebar-btn" data-target="profile" onclick="navigateTo('profile')">
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z"/></svg>
+                    Profile
+                </button>
+            </div>
+            <button class="sidebar-btn" data-target="create" onclick="openCreateMode()" style="margin-top: auto;">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                Create
+            </button>
+        </nav>
+
+        <section id="content-window">
+
+            <div id="page-portfolio" class="page active">
+                <div class="masonry-grid" id="portfolio-grid">
+                    </div>
+            </div>
+
+            <div id="page-profile" class="page">
+                <div class="profile-container">
+                    <div class="profile-left">
+                        <div class="profile-image-wrap">
+                            <img id="profile-img-preview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='%23ccc'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z'/></svg>" alt="Profile Image">
+                        </div>
+                        <input type="file" id="profile-image-input" accept="image/*" style="display: none;" onchange="previewProfileImage(event)">
+                        <button class="btn-gray" onclick="document.getElementById('profile-image-input').click()" style="width: 100%; margin-top: 4px;">Image upload</button>
+                    </div>
+                    <div class="profile-right">
+                        <div class="form-group">
+                            <label class="form-label">이름</label>
+                            <input type="text" id="profile-name" class="input-field">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">한 줄 소개</label>
+                            <input type="text" id="profile-bio" class="input-field">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">관심 분야</label>
+                            <input type="text" id="profile-interests" class="input-field">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Resume (PDF, Image)</label>
+                            <input type="file" id="resume-input" accept=".pdf,image/*" style="display: none;" onchange="previewResumeFile(event)">
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-gray" onclick="document.getElementById('resume-input').click()">Choose File</button>
+                                <a id="resume-newtab-link" href="#" target="_blank" class="btn-gray" style="display: none; text-decoration: none;">Open in new tab</a>
+                            </div>
+                            <div id="resume-preview-container" class="preview-box" style="display: none;"></div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <button class="btn-gray" onclick="saveProfile()" style="background-color: #9E9E9E; color: white;">Save Profile</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-create" class="page">
+                <div id="edit-banner" class="banner" style="display: none;">
+                    Editing post. Saving will update the existing post. Choosing a new image/video replaces it; leave empty to keep current media.
+                </div>
+                <h2 id="form-heading" style="margin-bottom: 24px; font-weight: 800;">Create Post</h2>
+                <form id="post-form" onsubmit="handlePostSubmit(event)">
+                    <input type="hidden" id="post-edit-id">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" id="post-title" class="input-field" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Author</label>
+                        <input type="text" id="post-author" class="input-field">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Content</label>
+                        <textarea id="post-content" class="input-field"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cover Image File</label>
+                        <input type="file" id="post-image" class="input-field" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Video Input (MP4 File or URL)</label>
+                        <input type="file" id="post-video-file" class="input-field" accept="video/mp4" style="margin-bottom: 10px;">
+                        <input type="url" id="post-video-url" class="input-field" placeholder="Paste YouTube link or direct MP4 URL">
+                        <span id="current-video-note" style="font-size: 12px; color: #777; display: none; margin-top: 4px;">(current video kept)</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Generation Prompt</label>
+                        <textarea id="post-prompt" class="input-field" placeholder="Describe the configuration or AI generation prompt parameters..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" id="form-submit-btn" class="btn-gray" style="background-color: #9E9E9E; color: white;">Save Post</button>
+                        <button type="button" id="form-cancel-btn" class="btn-gray" onclick="cancelEditMode()" style="display: none;">Cancel edit</button>
+                    </div>
+                </form>
+            </div>
+
+        </section>
+    </main>
+
+    <div id="detail-modal" onclick="closeModal(event)">
+        <div class="modal-wrapper" onclick="event.stopPropagation()">
+            <button class="modal-close-btn" onclick="closeModal(force=true)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div id="modal-media-container" class="modal-media"></div>
+            <div class="modal-body">
+                <h2 id="modal-title" class="modal-title"></h2>
+                <div id="modal-author" class="modal-author"></div>
+                <div id="modal-content" class="modal-content-text"></div>
+                <div id="modal-prompt-box" class="prompt-card">
+                    <div class="prompt-label">GENERATION PROMPT</div>
+                    <div id="modal-prompt" class="prompt-text"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-edit-btn" class="btn-gray">Edit</button>
+                <button id="modal-delete-btn" class="btn-gray">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer">
+        성균관대 영상학과 | 노희수<br>
+        email: sunny8623@g.skku.edu<br>
+        address: 서울시 성북구 돈암동<br>
+        Copyright @ HS Roh 2026 
+    </footer>
+
+    <script>
+        // --- CONSTANTS BLOCK ---
+        const VITE_SUPABASE_URL = "https://ajguemgonknvaeccyiri.supabase.co/rest/v1/";
+        const VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_t0dJfIDGv5-EAfL9HhI6aw_l_m78oQv";
+        const VITE_SUPABASE_STORAGE_BUCKET = "portfolio-media";
+        const VITE_YOUTUBE_CHANNEL_URL = "https://www.youtube.com/";
+        const VITE_INSTAGRAM_URL = "https://www.instagram.com/";
+        const VITE_THREADS_URL = "https://www.threads.net/";
+
+        const SUPABASE_BASE_URL = VITE_SUPABASE_URL.replace(/\/rest\/v1\/?$/, "");
+
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_BASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY);
+
+        let currentProfileData = null;
+        let selectedProfileImageFile = null;
+        let selectedResumeFile = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSocialNavbar();
+            loadPortfolioStream();
+            loadProfileData();
+        });
+
+        function navigateTo(targetPageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.sidebar-btn').forEach(btn => btn.classList.remove('active'));
+
+            const targetPage = document.getElementById(`page-${targetPageId}`);
+            if (targetPage) targetPage.classList.add('active');
+
+            const nativeNavBtn = document.querySelector(`.sidebar-btn[data-target="${targetPageId}"]`);
+            if (nativeNavBtn) nativeNavBtn.classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderSocialNavbar() {
+            const container = document.getElementById('social-container');
+            const networks = [
+                { url: VITE_YOUTUBE_CHANNEL_URL, path: "M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09v1.66c0 .6-.03 1.29-.1 2.09-.06.8-.15 1.43-.28 1.9-.22.78-.83 1.4-1.64 1.63-.47.13-1.11.22-1.91.28-.8.06-1.48.09-2.08.09H8.27c-.6 0-1.28-.03-2.08-.09-.8-.06-1.44-.15-1.91-.28-.81-.23-1.42-.85-1.64-1.63-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09v-1.66c0-.6.03-1.29.1-2.09.06-.8.15-1.43.28-1.9.22-.78.83-1.4 1.64-1.63.47-.13 1.11-.22 1.91-.28.8-.06 1.48-.09 2.08-.09h7.79c.6 0 1.28.03 2.08.09.8.06 1.44.15 1.91.28.81.23 1.42.85 1.64 1.63z" },
+                { url: VITE_INSTAGRAM_URL, path: "M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8A3.6 3.6 0 0 0 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6A3.6 3.6 0 0 0 16.4 4H7.6m4.4 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9m0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m4.75-.75a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5z" },
+                { url: VITE_THREADS_URL, path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" }
+            ];
+            container.innerHTML = networks.map(net => `
+                <a href="${net.url}" target="_blank">
+                    <svg class="social-icon" viewBox="0 0 24 24"><path d="${net.path}"/></svg>
+                </a>
+            `).join('');
+        }
+
+        // --- SUPABASE STORAGE MANAGEMENT CONTROLLER ---
+        async function uploadBinaryBlob(path, pipelineFile) {
+            const extension = pipelineFile.name.split('.').pop();
+            const isolatedUniquePath = `${path}/${Date.now()}_${Math.random().toString(36).substring(7)}.${extension}`;
+            
+            const { data, error } = await supabaseClient.storage
+                .from(VITE_SUPABASE_STORAGE_BUCKET)
+                .upload(isolatedUniquePath, pipelineFile, { cacheControl: '3600', upsert: true });
+
+            if (error) throw error;
+
+            const { data: publicUrlData } = supabaseClient.storage
+                .from(VITE_SUPABASE_STORAGE_BUCKET)
+                .getPublicUrl(isolatedUniquePath);
+
+            return { targetUrl: publicUrlData.publicUrl, deployedStoragePath: isolatedUniquePath };
+        }
+
+        async function purgeStorageAsset(storagePath) {
+            if (!storagePath) return;
+            try {
+                await supabaseClient.storage.from(VITE_SUPABASE_STORAGE_BUCKET).remove([storagePath]);
+            } catch (err) {
+                console.error("Purge fallback execution halted on target: ", storagePath);
+            }
+        }
+
+        // --- PROFILE CONTROL IMPLEMENTATION PIPELINE ---
+        async function loadProfileData() {
+            try {
+                const { data, error } = await supabaseClient.from('profile').select('*').limit(1);
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    currentProfileData = data[0];
+                    document.getElementById('profile-name').value = currentProfileData.name || '';
+                    document.getElementById('profile-bio').value = currentProfileData.bio || '';
+                    document.getElementById('profile-interests').value = currentProfileData.interests || '';
+                    
+                    if (currentProfileData.profile_image_url) {
+                        document.getElementById('profile-img-preview').src = currentProfileData.profile_image_url;
+                    }
+                    if (currentProfileData.resume_url) {
+                        renderPipelineResumePreview(currentProfileData.resume_url);
+                    }
+                }
+            } catch (err) {
+                console.error("Profile payload mapping context error:", err.message);
+            }
+        }
+
+        function previewProfileImage(event) {
+            const targetFile = event.target.files[0];
+            if (!targetFile) return;
+            selectedProfileImageFile = targetFile;
+            
+            const localReader = new FileReader();
+            localReader.onload = (e) => {
+                document.getElementById('profile-img-preview').src = e.target.result;
+            };
+            localReader.readAsDataURL(targetFile);
+        }
+
+        function previewResumeFile(event) {
+            const targetFile = event.target.files[0];
+            if (!targetFile) return;
+            selectedResumeFile = targetFile;
+
+            const targetExtension = targetFile.name.split('.').pop().toLowerCase();
+            const mockObjectURL = URL.createObjectURL(targetFile);
+            renderPipelineResumePreview(mockObjectURL, targetExtension);
+        }
+
+        function renderPipelineResumePreview(urlSource, explicitExtension = null) {
+            const previewContainer = document.getElementById('resume-preview-container');
+            const dynamicLink = document.getElementById('resume-newtab-link');
+            
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'block';
+            
+            dynamicLink.href = urlSource;
+            dynamicLink.style.display = 'inline-flex';
+
+            let deducedExtension = explicitExtension;
+            if (!deducedExtension) {
+                const standardStrippedUrl = urlSource.split('?')[0];
+                deducedExtension = standardStrippedUrl.split('.').pop().toLowerCase();
+            }
+
+            if (deducedExtension === 'pdf') {
+                previewContainer.innerHTML = `<iframe src="${urlSource}"></iframe>`;
+            } else if (['png', 'jpg', 'jpeg', 'webp'].includes(deducedExtension)) {
+                previewContainer.innerHTML = `<img src="${urlSource}" alt="Resume Context Layer">`;
+            } else {
+                previewContainer.innerHTML = `<a href="${urlSource}" target="_blank" style="color: #333; font-weight:700;">Open Document Spec File</a>`;
+            }
+        }
+
+        async function saveProfile() {
+            let newlyUploadedImageTrack = null;
+            let newlyUploadedResumeTrack = null;
+
+            try {
+                let currentAvatarUrl = currentProfileData ? currentProfileData.profile_image_url : null;
+                let currentResumeUrl = currentProfileData ? currentProfileData.resume_url : null;
+
+                if (selectedProfileImageFile) {
+                    const result = await uploadBinaryBlob('profile/image', selectedProfileImageFile);
+                    currentAvatarUrl = result.targetUrl;
+                    newlyUploadedImageTrack = result.deployedStoragePath;
+                }
+
+                if (selectedResumeFile) {
+                    const result = await uploadBinaryBlob('resumes', selectedResumeFile);
+                    currentResumeUrl = result.targetUrl;
+                    newlyUploadedResumeTrack = result.deployedStoragePath;
+                }
+
+                const packedProfileModel = {
+                    name: document.getElementById('profile-name').value.trim(),
+                    bio: document.getElementById('profile-bio').value.trim(),
+                    interests: document.getElementById('profile-interests').value.trim(),
+                    profile_image_url: currentAvatarUrl,
+                    resume_url: currentResumeUrl
+                };
+
+                let transactionalResult;
+                if (currentProfileData && currentProfileData.id) {
+                    transactionalResult = await supabaseClient.from('profile').update(packedProfileModel).eq('id', currentProfileData.id).select();
+                } else {
+                    transactionalResult = await supabaseClient.from('profile').insert([packedProfileModel]).select();
+                }
+
+                if (transactionalResult.error) throw transactionalResult.error;
+                
+                alert("Profile synchronized successfully.");
+                currentProfileData = transactionalResult.data[0];
+                selectedProfileImageFile = null;
+                selectedResumeFile = null;
+                loadProfileData();
+            } catch (err) {
+                alert(`Synchronization transaction failure: ${err.message}`);
+                await purgeStorageAsset(newlyUploadedImageTrack);
+                await purgeStorageAsset(newlyUploadedResumeTrack);
+            }
+        }
+
+        // --- PORTFOLIO DYNAMIC CORE MASONRY COMPONENT ENGINE ---
+        async function loadPortfolioStream() {
+            try {
+                const { data: postCollection, error } = await supabaseClient
+                    .from('posts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const gridContainer = document.getElementById('portfolio-grid');
+                gridContainer.innerHTML = '';
+
+                if (!postCollection || postCollection.length === 0) {
+                    gridContainer.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #888; padding: 40px 0;">No portfolio items uploaded yet.</p>`;
+                    return;
+                }
+
+                postCollection.forEach(post => {
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'portfolio-card';
+                    cardElement.onclick = () => launchDetailModal(post);
+
+                    let mediaNode = '';
+                    const resolvedCoverImage = post.image_url ? post.image_url.trim() : '';
+                    const resolvedDirectVideo = post.video_url ? post.video_url.trim() : '';
+                    const resolvedYoutubeUrl = post.youtube_url ? post.youtube_url.trim() : '';
+
+                    if (resolvedCoverImage) {
+                        if (resolvedDirectVideo) {
+                            mediaNode = `
+                                <video muted loop playsinline preload="metadata" poster="${resolvedCoverImage}" 
+                                       onmouseenter="this.play()" onmouseleave="this.pause(); this.currentTime=0;">
+                                    <source src="${resolvedDirectVideo}" type="video/mp4">
+                                </video>
+                            `;
+                        } else {
+                            mediaNode = `<img src="${resolvedCoverImage}" alt="Cover Graphic" onerror="this.style.display='none'">`;
+                        }
+                    } else if (resolvedDirectVideo) {
+                        mediaNode = `
+                            <video muted loop playsinline preload="metadata" 
+                                   onmouseenter="this.play()" onmouseleave="this.pause(); this.currentTime=0;">
+                                <source src="${resolvedDirectVideo}" type="video/mp4">
+                            </video>
+                        `;
+                    } else if (resolvedYoutubeUrl) {
+                        const extractedId = parseYoutubeIdentifier(resolvedYoutubeUrl);
+                        const thumbUrl = extractedId ? `https://img.youtube.com/vi/${extractedId}/hqdefault.jpg` : '';
+                        mediaNode = thumbUrl ? `<img src="${thumbUrl}" alt="YouTube Cover Interface" onerror="this.style.display='none'">` : '';
+                    }
+
+                    cardElement.innerHTML = `
+                        <div class="card-media-container">
+                            <div class="card-overlay"></div>
+                            ${mediaNode}
+                        </div>
+                        <div class="card-meta">
+                            <div class="card-title">${post.title ? post.title.trim() : 'Untitled'}</div>
+                            <div class="card-author">${post.author ? 'by ' + post.author.trim() : ''}</div>
+                        </div>
+                    `;
+                    gridContainer.appendChild(cardElement);
+                });
+            } catch (err) {
+                console.error("Error drawing grid stream runtime mapping loop: ", err.message);
+            }
+        }
+
+        function parseYoutubeIdentifier(url) {
+            if (!url) return null;
+            const analyticalRegex = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const matchIndex = url.match(analyticalRegex);
+            return (matchIndex && matchIndex[2].length === 11) ? matchIndex[2] : null;
+        }
+
+        // --- POST OPERATIONS ROUTING & VALIDATION MANAGER (CRUD) ---
+        function openCreateMode() {
+            document.getElementById('post-form').reset();
+            document.getElementById('post-edit-id').value = '';
+            document.getElementById('edit-banner').style.display = 'none';
+            document.getElementById('form-heading').innerText = 'Create Post';
+            document.getElementById('form-submit-btn').innerText = 'Save Post';
+            document.getElementById('form-cancel-btn').style.display = 'none';
+            document.getElementById('current-video-note').style.display = 'none';
+            navigateTo('create');
+        }
+
+        function openEditMode(post) {
+            closeModal(force=true);
+            document.getElementById('post-form').reset();
+            
+            document.getElementById('post-edit-id').value = post.id;
+            document.getElementById('post-title').value = post.title || '';
+            document.getElementById('post-author').value = post.author || '';
+            document.getElementById('post-content').value = post.content || '';
+            document.getElementById('post-prompt').value = post.prompt || '';
+            
+            if (post.youtube_url) {
+                document.getElementById('post-video-url').value = post.youtube_url;
+            } else if (post.video_url) {
+                document.getElementById('post-video-url').value = post.video_url;
+            }
+
+            if (post.video_url || post.youtube_url) {
+                document.getElementById('current-video-note').style.display = 'inline';
+            } else {
+                document.getElementById('current-video-note').style.display = 'none';
+            }
+
+            document.getElementById('edit-banner').style.display = 'block';
+            document.getElementById('form-heading').innerText = 'Edit Post';
+            document.getElementById('form-submit-btn').innerText = 'Update';
+            document.getElementById('form-cancel-btn').style.display = 'inline-flex';
+            
+            navigateTo('create');
+        }
+
+        function cancelEditMode() {
+            document.getElementById('post-form').reset();
+            document.getElementById('post-edit-id').value = '';
+            navigateTo('portfolio');
+        }
+
+        async function handlePostSubmit(event) {
+            event.preventDefault();
+
+            const primaryId = document.getElementById('post-edit-id').value;
+            const activeEditMode = primaryId.length > 0;
+
+            const targetedImageFile = document.getElementById('post-image').files[0];
+            const targetedVideoFile = document.getElementById('post-video-file').files[0];
+            const pastedVideoUrlString = document.getElementById('post-video-url').value.trim();
+
+            let newlyUploadedImageTrack = null;
+            let newlyUploadedVideoTrack = null;
+
+            try {
+                let finalBoundImageUrl = null;
+                let finalBoundVideoUrl = null;
+                let finalBoundYoutubeUrl = null;
+
+                if (activeEditMode) {
+                    const { data: historicalRow } = await supabaseClient.from('posts').select('*').eq('id', primaryId).single();
+                    if (historicalRow) {
+                        finalBoundImageUrl = historicalRow.image_url;
+                        finalBoundVideoUrl = historicalRow.video_url;
+                        finalBoundYoutubeUrl = historicalRow.youtube_url;
+                    }
+                }
+
+                if (targetedImageFile) {
+                    const result = await uploadBinaryBlob('images', targetedImageFile);
+                    finalBoundImageUrl = result.targetUrl;
+                    newlyUploadedImageTrack = result.deployedStoragePath;
+                }
+
+                if (targetedVideoFile) {
+                    const result = await uploadBinaryBlob('videos', targetedVideoFile);
+                    finalBoundVideoUrl = result.targetUrl;
+                    finalBoundYoutubeUrl = null;
+                    newlyUploadedVideoTrack = result.deployedStoragePath;
+                } else if (pastedVideoUrlString) {
+                    const parsedYoutubeId = parseYoutubeIdentifier(pastedVideoUrlString);
+                    if (parsedYoutubeId) {
+                        finalBoundYoutubeUrl = pastedVideoUrlString;
+                        finalBoundVideoUrl = null;
+                    } else {
+                        finalBoundVideoUrl = pastedVideoUrlString;
+                        finalBoundYoutubeUrl = null;
+                    }
+                }
+
+                const calculatedPayloadModel = {
+                    title: document.getElementById('post-title').value.trim(),
+                    author: document.getElementById('post-author').value.trim(),
+                    content: document.getElementById('post-content').value.trim(),
+                    prompt: document.getElementById('post-prompt').value.trim(),
+                    image_url: finalBoundImageUrl,
+                    video_url: finalBoundVideoUrl,
+                    youtube_url: finalBoundYoutubeUrl
+                };
+
+                let transactionalQuery;
+                if (activeEditMode) {
+                    transactionalQuery = await supabaseClient.from('posts').update(calculatedPayloadModel).eq('id', primaryId);
+                } else {
+                    transactionalQuery = await supabaseClient.from('posts').insert([calculatedPayloadModel]);
+                }
+
+                if (transactionalQuery.error) throw transactionalQuery.error;
+
+                document.getElementById('post-form').reset();
+                navigateTo('portfolio');
+                loadPortfolioStream();
+            } catch (err) {
+                alert(`Error committing transaction schema operation: ${err.message}`);
+                await purgeStorageAsset(newlyUploadedImageTrack);
+                await purgeStorageAsset(newlyUploadedVideoTrack);
+            }
+        }
+
+        async function executeDeleteTransaction(targetPostId) {
+            if (!confirm("Are you certain you want to permanently delete this portfolio entry?")) return;
+            try {
+                const { error } = await supabaseClient.from('posts').delete().eq('id', targetPostId);
+                if (error) throw error;
+                
+                closeModal(force=true);
+                loadPortfolioStream();
+            } catch (err) {
+                alert(`Deletion structural interface failure: ${err.message}`);
+            }
+        }
+
+        // --- POLISHED DETAIL GALLERY MODAL CONTROLLER SYSTEM ---
+        function launchDetailModal(post) {
+            const mediaViewShell = document.getElementById('modal-media-container');
+            const promptBoxNode = document.getElementById('modal-prompt-box');
+            
+            mediaViewShell.innerHTML = '';
+            
+            const txtTitle = post.title ? post.title.trim() : 'Untitled';
+            const txtAuthor = post.author ? 'by ' + post.author.trim() : '';
+            const txtContent = post.content ? post.content.trim() : '';
+            const txtPrompt = post.prompt ? post.prompt.trim() : '';
+
+            document.getElementById('modal-title').innerText = txtTitle;
+            
+            const authorContainer = document.getElementById('modal-author');
+            if(txtAuthor) {
+                authorContainer.innerText = txtAuthor;
+                authorContainer.style.display = 'block';
+            } else {
+                authorContainer.style.display = 'none';
+            }
+
+            const contentContainer = document.getElementById('modal-content');
+            if(txtContent) {
+                contentContainer.innerText = txtContent;
+                contentContainer.style.display = 'block';
+            } else {
+                contentContainer.style.display = 'none';
+            }
+
+            if (txtPrompt) {
+                document.getElementById('modal-prompt').innerText = txtPrompt;
+                promptBoxNode.style.display = 'block';
+            } else {
+                promptBoxNode.style.display = 'none';
+            }
+
+            if (post.video_url && post.video_url.trim().length > 0) {
+                mediaViewShell.innerHTML = `
+                    <video controls autoplay muted playsinline>
+                        <source src="${post.video_url.trim()}" type="video/mp4">
+                    </video>
+                `;
+            } else if (post.youtube_url && post.youtube_url.trim().length > 0) {
+                const embeddedId = parseYoutubeIdentifier(post.youtube_url.trim());
+                if (embeddedId) {
+                    mediaViewShell.innerHTML = `
+                        <div class="video-container">
+                            <iframe src="https://www.youtube.com/embed/${embeddedId}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                    `;
+                }
+            } else if (post.image_url && post.image_url.trim().length > 0) {
+                mediaViewShell.innerHTML = `<img src="${post.image_url.trim()}" alt="Project View Matrix Layer">`;
+            }
+
+            document.getElementById('modal-edit-btn').onclick = () => openEditMode(post);
+            document.getElementById('modal-delete-btn').onclick = () => executeDeleteTransaction(post.id);
+
+            document.getElementById('detail-modal').classList.add('active');
+        }
+
+        function closeModal(force = false) {
+            document.getElementById('detail-modal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('modal-media-container').innerHTML = '';
+            }, 300);
+        }
+    </script>
+</body>
+</html>
